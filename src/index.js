@@ -26,6 +26,7 @@ const cards = [
 ];
 
 const memoryGame = new MemoryGame(cards);
+memoryGame.shuffleCards()
 
 window.addEventListener('load', (event) => {
   let html = '';
@@ -41,11 +42,81 @@ window.addEventListener('load', (event) => {
   // Add all the divs to the HTML
   document.querySelector('#memory-board').innerHTML = html;
 
+  function isLocked(card) {
+    return card.classList.contains("blocked")
+  }
+
+  function lock(card) {
+    card.classList.add("blocked")
+    return card
+  }
+
+  function unlock(card) {
+    card.classList.remove("blocked")
+    return card
+  }
+
+  function lockBoard() {
+    document.querySelectorAll('.card:not(.turned)').forEach((faceDownCard) => {
+      lock(faceDownCard)
+    })
+  }
+
+  function unLockBoard() {
+    document.querySelectorAll('.card:not(.turned)').forEach((faceDownCard) => {
+      unlock(faceDownCard)
+    })
+  }
+
+  function turn(card) {
+    card.classList.toggle("turned")
+    return card
+  }
+
+  function increment(counter) {
+    document.getElementById(counter).innerText++
+  }
+
+  function resetGame() {
+    document.querySelectorAll('.card').forEach((card) => {
+      unlock(turn(card))
+    })
+    document.getElementById("pairs-clicked").innerHTML = 0
+    document.getElementById("pairs-guessed").innerHTML = 0
+  }
+
   // Bind the click event of each element to a function
   document.querySelectorAll('.card').forEach((card) => {
     card.addEventListener('click', () => {
-      // TODO: write some code here
-      console.log(`Card clicked: ${card}`);
+      if (isLocked(card)) return
+
+      let otherCard = document.querySelector(".card.turned:not(.blocked)")
+
+      if (otherCard) {
+        const card1 = card.getAttribute("data-card-name")
+        const card2 = otherCard.getAttribute("data-card-name")
+        lockBoard()
+        increment("pairs-clicked");
+
+        if (memoryGame.checkIfPair(card1, card2)) {
+          unLockBoard()
+          lock(card)
+          lock(otherCard)
+          increment("pairs-guessed");
+
+          if (memoryGame.checkIfFinished()) {
+            setTimeout(resetGame, 3000);
+          }
+        } else {
+          setTimeout(() => {
+            turn(card)
+            turn(otherCard)
+            unLockBoard()
+          }, 1500)
+         }
+      }
+
+      turn(card)
     });
   });
 });
