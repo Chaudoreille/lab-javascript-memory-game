@@ -1,3 +1,5 @@
+import { MemoryGame } from "./memory.js"; 
+
 const cards = [
   { name: 'aquaman', img: 'aquaman.jpg' },
   { name: 'batman', img: 'batman.jpg' },
@@ -25,98 +27,101 @@ const cards = [
   { name: 'thor', img: 'thor.jpg' }
 ];
 
-const memoryGame = new MemoryGame(cards);
-memoryGame.shuffleCards()
 
-window.addEventListener('load', (event) => {
+const memoryGame = new MemoryGame(cards);
+
+function initGame() {
+  memoryGame.shuffleCards()
+
   let html = '';
   memoryGame.cards.forEach((pic) => {
-    html += `
-      <div class="card" data-card-name="${pic.name}">
-        <div class="back" name="${pic.img}"></div>
-        <div class="front" style="background: url(img/${pic.img}) no-repeat"></div>
-      </div>
-    `;
-  });
-
+  html += `
+    <div class="card" data-card-name="${pic.name}">
+      <div class="back" name="${pic.img}"></div>
+      <div class="front" style="background: url(img/${pic.img}) no-repeat"></div>
+    </div>
+  `;
+  })
   // Add all the divs to the HTML
   document.querySelector('#memory-board').innerHTML = html;
+}
 
-  function isLocked(card) {
-    return card.classList.contains("blocked")
-  }
+initGame()
 
-  function lock(card) {
-    card.classList.add("blocked")
-    return card
-  }
+function isLocked(card) {
+  return card.classList.contains("blocked")
+}
 
-  function unlock(card) {
-    card.classList.remove("blocked")
-    return card
-  }
+function lock(card) {
+  card.classList.add("blocked")
+  return card
+}
 
-  function lockBoard() {
-    document.querySelectorAll('.card:not(.turned)').forEach((faceDownCard) => {
-      lock(faceDownCard)
-    })
-  }
+function unlock(card) {
+  card.classList.remove("blocked")
+  return card
+}
 
-  function unLockBoard() {
-    document.querySelectorAll('.card:not(.turned)').forEach((faceDownCard) => {
-      unlock(faceDownCard)
-    })
-  }
+function lockBoard() {
+  document.querySelectorAll('.card:not(.turned)').forEach((faceDownCard) => {
+    lock(faceDownCard)
+  })
+}
 
-  function turn(card) {
-    card.classList.toggle("turned")
-    return card
-  }
+function unLockBoard() {
+  document.querySelectorAll('.card:not(.turned)').forEach((faceDownCard) => {
+    unlock(faceDownCard)
+  })
+}
 
-  function increment(counter) {
-    document.getElementById(counter).innerText++
-  }
+function turn(card) {
+  card.classList.toggle("turned")
+  return card
+}
 
-  function resetGame() {
-    document.querySelectorAll('.card').forEach((card) => {
-      unlock(turn(card))
-    })
-    document.getElementById("pairs-clicked").innerHTML = 0
-    document.getElementById("pairs-guessed").innerHTML = 0
-  }
+function increment(counter) {
+  document.getElementById(counter).innerText++
+}
 
-  // Bind the click event of each element to a function
-  document.querySelectorAll('.card').forEach((card) => {
-    card.addEventListener('click', () => {
-      if (isLocked(card)) return
+function resetGame() {
+  memoryGame.reset()
+  document.getElementById("pairs-clicked").innerHTML = 0
+  document.getElementById("pairs-guessed").innerHTML = 0
 
-      let otherCard = document.querySelector(".card.turned:not(.blocked)")
+  initGame()
+}
 
-      if (otherCard) {
-        const card1 = card.getAttribute("data-card-name")
-        const card2 = otherCard.getAttribute("data-card-name")
-        lockBoard()
-        increment("pairs-clicked");
+// Bind the click event of each element to a function
+document.querySelectorAll('.card').forEach((card) => {
+  card.addEventListener('click', () => {
+    if (isLocked(card)) return
 
-        if (memoryGame.checkIfPair(card1, card2)) {
+    let otherCard = document.querySelector(".card.turned:not(.blocked)")
+
+    if (otherCard) {
+      const card1 = card.getAttribute("data-card-name")
+      const card2 = otherCard.getAttribute("data-card-name")
+      lockBoard()
+      increment("pairs-clicked")
+
+      if (memoryGame.checkIfPair(card1, card2)) {
+        unLockBoard()
+        lock(card)
+        lock(otherCard)
+        increment("pairs-guessed")
+
+        if (memoryGame.checkIfFinished()) {
+          setTimeout(resetGame, 3000);
+        }
+      } else {
+        setTimeout(() => {
+          turn(card)
+          turn(otherCard)
           unLockBoard()
-          lock(card)
-          lock(otherCard)
-          increment("pairs-guessed");
+        }, 1500)
+        }
+    }
 
-          if (memoryGame.checkIfFinished()) {
-            setTimeout(resetGame, 3000);
-          }
-        } else {
-          setTimeout(() => {
-            turn(card)
-            turn(otherCard)
-            unLockBoard()
-          }, 1500)
-         }
-      }
-
-      turn(card)
-    });
+    turn(card)
   });
 });

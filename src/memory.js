@@ -39,4 +39,12 @@ class MemoryGame {
   checkIfFinished() {
     return this.pairsGuessed >= this.cards.length / 2
   }
+
+  reset() {
+    this.pickedCards = []
+    this.pairsClicked = 0
+    this.pairsGuessed = 0
+  }
 }
+
+export {MemoryGame}
